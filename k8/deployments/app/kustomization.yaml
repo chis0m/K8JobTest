@@ -7,4 +7,5 @@ resources:
   - app-sec.yaml
   - app-deploy.yaml
   - app-service.yaml
+  - app-sa.yaml
 

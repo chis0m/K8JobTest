@@ -18,6 +18,7 @@ spec:
       labels:
         app: app-deploy
     spec:
+      serviceAccountName: job-creator-sa
       containers:
         - name: laravel
           image: cl0ud/excel
