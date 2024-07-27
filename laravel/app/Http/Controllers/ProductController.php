@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\ProductService;
-use Illuminate\Http\JsonResponse;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 
 class ProductController extends Controller
@@ -26,11 +28,17 @@ class ProductController extends Controller
         return Product::query()->take(100)->get();
     }
 
+    /**
+     * @throws Exception
+     */
+    public function throwError()
+    {
+        Log::info("Throwing exception now");
+        throw new Exception("This is a test exception");
+    }
+
     public function generateExcel(Request $request): JsonResponse
     {
-
-//        logger("Testing");
-//        throw new \Exception("xxxxxxxxxxxxxxxxxxxxx");
         $users = User::all();
         $fileName = 'products.xlsx';
         $zipFileName = 'products.zip';
@@ -55,21 +63,42 @@ class ProductController extends Controller
         $jobName = 'generate-excel-job-' . uniqid();
         $namespace = "excel";
         $image = "cl0ud/excel";
+        $secret = "app-sec";
+        $configMap = "app-cm";
+
+        Log::info("The ids of the users to send email", $userIds);
 
         $jobYaml = [
             'apiVersion' => 'batch/v1',
             'kind' => 'Job',
-            'metadata' => ['name' => $jobName],
+            'metadata' => [
+                'name' => $jobName,
+                'namespace' => $namespace
+            ],
             'spec' => [
                 'template' => [
                     'spec' => [
                         'containers' => [
                             [
                                 'name' => 'excel-generator',
-                                'image' => "$image",
+                                'image' => $image,
+                                'imagePullPolicy' => 'Always',
                                 'command' => ['sh', '-c', "php /app/artisan generate:excel --size=$size"],
                                 'env' => [
                                     ['name' => 'USER_IDS', 'value' => json_encode($userIds)],
+                                    [
+                                        'name' => 'DB_PASSWORD',
+                                        'valueFrom' => [
+                                            'secretKeyRef' => [
+                                                'name' => 'moco-app-db',
+                                                'key' => 'ADMIN_PASSWORD'
+                                            ]
+                                        ]
+                                    ]
+                                ],
+                                'envFrom' => [
+                                    ['configMapRef' => ['name' => $configMap]],
+                                    ['secretRef' => ['name' => $secret]]
                                 ]
                             ]
                         ],
@@ -80,11 +109,12 @@ class ProductController extends Controller
             ]
         ];
 
-        // Trigger the Kubernetes job using the internal Kubernetes API server endpoint
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'Authorization' => 'Bearer ' . $this->getKubernetesToken(),
-        ])->post("https://kubernetes.default.svc/apis/batch/v1/namespaces/$namespace/jobs", json_encode($jobYaml));
+        ])->withOptions([
+            'verify' => '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
+        ])->post('https://kubernetes.default.svc/apis/batch/v1/namespaces/excel/jobs', $jobYaml);
 
         return response()->json(['status' => 'Job created', 'response' => $response->json()]);
     }
