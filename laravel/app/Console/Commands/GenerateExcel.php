@@ -33,10 +33,9 @@ class GenerateExcel extends Command
     public function handle(): void
     {
         $users = User::all();
-
-        $fileName = 'products.xlsx';
-
-        $zipFileName = 'products.zip';
+        $timestamp = date('Y-m-d-H-i-s');
+        $fileName = "products-{$timestamp}.xlsx";
+        $zipFileName = "products-{$timestamp}.zip";
 
         $this->productService->size = $this->option('size');
 
