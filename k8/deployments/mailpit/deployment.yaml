@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailpit
+  labels:
+    app: mailpit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailpit
+  template:
+    metadata:
+      labels:
+        app: mailpit
+    spec:
+      containers:
+        - name: mailpit
+          image: axllent/mailpit:latest
+          ports:
+            - containerPort: 8025
+            - containerPort: 1025
+          env:
+            - name: MAILPIT_SMTP_BINDADDR
+              value: "0.0.0.0:1025"
+            - name: MAILPIT_HTTP_BINDADDR
+              value: "0.0.0.0:8025"

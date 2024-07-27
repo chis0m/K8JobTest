@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-deploy-service
+  labels:
+    app: app-deploy-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-app-deploy
+      port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: app-deploy

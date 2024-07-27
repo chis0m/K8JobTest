@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mysql-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: mysql-job
+          image: mysql
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: moco-app-db
+                  key: ADMIN_PASSWORD
+            - name: DB_DATABASE
+              value: "rimsys"
+            - name: DB_USERNAME
+              value: moco-admin
+            - name: DB_HOST
+              value: moco-app-db-primary
+          command: ["/bin/bash", "-c"]
+          args:
+            - mysql -h"$DB_HOST" -u"$DB_USERNAME" -p"$DB_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS $DB_DATABASE;"
+      restartPolicy: Never
+  # backoffLimit: 1

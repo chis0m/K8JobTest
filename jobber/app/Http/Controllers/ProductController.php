@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Product;
+use App\Models\User;
+use App\Services\ProductService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+
+class ProductController extends Controller
+{
+    protected $productService;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        return Product::query()->take(100)->get();
+    }
+
+    public function generateExcel(Request $request): JsonResponse
+    {
+
+//        logger("Testing");
+//        throw new \Exception("xxxxxxxxxxxxxxxxxxxxx");
+        $users = User::all();
+        $fileName = 'products.xlsx';
+        $zipFileName = 'products.zip';
+        $this->productService->size = $request->query('size');
+
+        // zip and upload to s3
+        $zipUrl = $this->productService->zipAndUploadToS3($fileName, $zipFileName);
+
+        // Upload directly to s3
+        $url = $this->productService->convertToExcelAndUploadToS3($fileName);
+
+        // Send email with the URL
+        $this->productService->sendEmail($users, $url, $zipUrl);
+
+        return response()->json(['message' => 'Export generated and email sent successfully.']);
+    }
+
+    public function generateExcelJob(Request $request): JsonResponse
+    {
+        $userIds = User::query()->pluck('id')->toArray();
+        $size = $request->query('size', 1000);
+        $jobName = 'generate-excel-job-' . uniqid();
+        $namespace = "excel";
+        $image = "cl0ud/excel";
+
+        $jobYaml = [
+            'apiVersion' => 'batch/v1',
+            'kind' => 'Job',
+            'metadata' => ['name' => $jobName],
+            'spec' => [
+                'template' => [
+                    'spec' => [
+                        'containers' => [
+                            [
+                                'name' => 'excel-generator',
+                                'image' => "$image",
+                                'command' => ['sh', '-c', "php /app/artisan generate:excel --size=$size"],
+                                'env' => [
+                                    ['name' => 'USER_IDS', 'value' => json_encode($userIds)],
+                                ]
+                            ]
+                        ],
+                        'restartPolicy' => 'Never'
+                    ]
+                ],
+                'backoffLimit' => 4
+            ]
+        ];
+
+        // Trigger the Kubernetes job using the internal Kubernetes API server endpoint
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . $this->getKubernetesToken(),
+        ])->post("https://kubernetes.default.svc/apis/batch/v1/namespaces/$namespace/jobs", json_encode($jobYaml));
+
+        return response()->json(['status' => 'Job created', 'response' => $response->json()]);
+    }
+
+    private function getKubernetesToken(): false|string
+    {
+        return file_get_contents('/var/run/secrets/kubernetes.io/serviceaccount/token');
+    }
+
+}

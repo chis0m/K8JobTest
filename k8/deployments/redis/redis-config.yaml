@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+data:
+  redis-config: |
+    maxmemory 12mb
+    maxmemory-policy allkeys-lru
+    activedefrag yes
+    active-defrag-threshold-lower 10 
