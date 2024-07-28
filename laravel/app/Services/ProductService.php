@@ -59,7 +59,7 @@ class ProductService
 
         // Check if the file exists before uploading
         if (file_exists($filePath)) {
-            Storage::disk('s3')->put($s3Path, file_get_contents($filePath), 'public');
+            Storage::disk('s3')->put($s3Path, file_get_contents($filePath), 'private');
             return Storage::disk('s3')->url($s3Path);
         } else {
             logger("File does not exist: " . $filePath);

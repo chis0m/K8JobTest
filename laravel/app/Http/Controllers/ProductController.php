@@ -66,8 +66,6 @@ class ProductController extends Controller
         $secret = "app-sec";
         $configMap = "app-cm";
 
-        Log::info("The ids of the users to send email", $userIds);
-
         $jobYaml = [
             'apiVersion' => 'batch/v1',
             'kind' => 'Job',

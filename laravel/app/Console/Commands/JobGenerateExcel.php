@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\User;
 use App\Services\ProductService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class JobGenerateExcel extends Command
 {
@@ -35,6 +36,8 @@ class JobGenerateExcel extends Command
         $userIds = json_decode(env('USER_IDS'), true);
 
         $users = User::query()->findMany($userIds);
+
+        Log::info("users to send emails to", $users->get("email")->toArray());
 
         $size = $this->option('size');
 
