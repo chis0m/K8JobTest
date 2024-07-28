@@ -83,7 +83,7 @@ class ProductController extends Controller
                                 'name' => 'excel-generator',
                                 'image' => $image,
                                 'imagePullPolicy' => 'Always',
-                                'command' => ['sh', '-c', "php /app/artisan generate:excel --size=$size"],
+                                'command' => ['sh', '-c', "php /app/artisan job:generate-excel --size=$size"],
                                 'env' => [
                                     ['name' => 'USER_IDS', 'value' => json_encode($userIds)],
                                     [

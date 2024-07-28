@@ -38,9 +38,9 @@ class JobGenerateExcel extends Command
 
         $size = $this->option('size');
 
-        $fileName = 'products.xlsx';
-
-        $zipFileName = 'products.zip';
+        $timestamp = date('Y-m-d-H-i-s');
+        $fileName = "products-{$timestamp}.xlsx";
+        $zipFileName = "products-{$timestamp}.zip";
 
         $this->productService->size = $size;
 
