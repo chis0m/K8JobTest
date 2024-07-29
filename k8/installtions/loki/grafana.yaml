@@ -1,0 +1,10 @@
+adminUser: admin
+adminPassword: password
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.loki:3100

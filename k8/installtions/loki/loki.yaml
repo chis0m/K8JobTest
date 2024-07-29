@@ -1,0 +1,158 @@
+deploymentMode: SimpleScalable
+loki:
+  storage:
+    bucketNames:
+      chunks: ${GRAFANA_LOKI_BUCKET_NAME}
+      ruler: ${GRAFANA_LOKI_BUCKET_NAME}
+    type: s3
+    s3:
+      region: us-east-1
+      endpoint: ${GRAFANA_LOKI_S3_ENDPOINT}
+      accessKeyId: ${GRAFANA_LOKI_S3_ACCESS_KEY_ID}
+      secretAccessKey: ${GRAFANA_LOKI_S3_SECRET_ACCESS_KEY}
+
+  schemaConfig:
+    configs:
+      - from: 2024-07-28
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+tableManager:
+  enabled: true
+  retention_deletes_enabled: true
+  retention_period: 48h
+
+chunksCache:
+  enabled: false
+
+test:
+  enabled: false
+
+
+write:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "200Mi"
+    limits:
+      cpu: "200m"
+      memory: "300Mi"
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 85
+    behavior:
+      scaleUp:
+        policies:
+          - type: Pods
+            value: 1
+            periodSeconds: 900
+      scaleDown:
+        policies:
+          - type: Pods
+            value: 1
+            periodSeconds: 1800
+        stabilizationWindowSeconds: 3600
+
+
+read:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "200Mi"
+    limits:
+      cpu: "200m"
+      memory: "300Mi"
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 85
+    behavior:
+      scaleUp:
+        policies:
+          - type: Pods
+            value: 1
+            periodSeconds: 900
+      scaleDown:
+        policies:
+          - type: Pods
+            value: 1
+            periodSeconds: 1800
+        stabilizationWindowSeconds: 3600
+
+
+backend:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "200Mi"
+    limits:
+      cpu: "200m"
+      memory: "300Mi"
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 85
+    behavior:
+      scaleUp:
+        policies:
+          - type: Pods
+            value: 1
+            periodSeconds: 900
+      scaleDown:
+        policies:
+          - type: Pods
+            value: 1
+            periodSeconds: 1800
+        stabilizationWindowSeconds: 3600
+  extraArgs:
+    - '-config.expand-env=true'
+  extraEnv:
+    - name: GRAFANA_LOKI_BUCKET_NAME
+      valueFrom:
+        secretKeyRef:
+          name: loki-secrets
+          key: s3_bucket_name
+    - name: GRAFANA_LOKI_S3_ENDPOINT
+      valueFrom:
+        secretKeyRef:
+          name: loki-secrets
+          key: s3_endpoint
+    - name: GRAFANA_LOKI_S3_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: loki-secrets
+          key: aws_access_key_id
+    - name: GRAFANA_LOKI_S3_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: loki-secrets
+          key: aws_secret_access_key
+
+resultsCache:
+  enabled: true
+  allocatedMemory: 100
+  maxItemMemory: 5
+  writebackSizeLimit: 200MB
+  writebackBuffer: 500000
+  writebackParallelism: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "200Mi"
+    limits:
+      cpu: "200m"
+      memory: "400Mi"

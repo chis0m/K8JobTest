@@ -37,20 +37,20 @@ class JobGenerateExcel extends Command
 
         $users = User::query()->findMany($userIds);
 
-        Log::info("users to send emails to", $users->get("email")->toArray());
+        Log::info("users to send emails to:", $users->pluck("email")->toArray());
 
         $size = $this->option('size');
 
         $timestamp = date('Y-m-d-H-i-s');
-        $fileName = "products-{$timestamp}.xlsx";
-        $zipFileName = "products-{$timestamp}.zip";
+
+        $fileName = "products-$timestamp.xlsx";
+
+        $zipFileName = "products-$timestamp.zip";
 
         $this->productService->size = $size;
 
-        // zip and upload to s3
         $zipUrl = $this->productService->zipAndUploadToS3($fileName, $zipFileName);
 
-        // Upload directly to s3
         $url = $this->productService->convertToExcelAndUploadToS3($fileName);
 
         $this->productService->sendEmail($users, $url, $zipUrl);

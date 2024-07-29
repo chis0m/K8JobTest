@@ -2,14 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use App\Models\User;
-use App\Services\ProductService;
 use Exception;
+use App\Models\User;
+use App\Models\Product;
 use Illuminate\Http\Request;
+use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\InvalidMetadataException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
+use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 
 class ProductController extends Controller
 {
@@ -31,12 +43,86 @@ class ProductController extends Controller
     /**
      * @throws Exception
      */
-    public function throwError()
+    public function throwErrors(): void
     {
-        Log::info("Throwing exception now");
-        throw new Exception("This is a test exception");
+        Log::emergency("This is an emergency log.");
+        Log::alert("This is an alert log.");
+        Log::critical("This is a critical log.");
+        Log::error("This is an error log.");
+        Log::warning("This is a warning log.");
+        Log::notice("This is a notice log.");
+        Log::info("This is an info log.");
+        Log::debug("This is a debug log.");
+
+        // Throw an exception at the end to simulate an error
+        $this->throwExceptions();
     }
 
+    /**
+     * @throws Exception
+     */
+    public function throwExceptions()
+    {
+        // Model not found
+        $rand = rand(0, 10);
+        logger("rand $rand");
+        if ($rand == 0) {
+            throw new ModelNotFoundException("Model not found");
+        }
+
+        // Authentication error
+        if ($rand == 1) {
+            throw new AuthenticationException("Unauthenticated");
+        }
+
+        // Validation error
+        if ($rand == 2) {
+            $validator = Validator::make([], []);
+            throw new ValidationException($validator, "Validation failed");
+        }
+
+        // Not found HTTP exception
+        if ($rand == 3) {
+            throw new AccessDeniedHttpException("Not Found");
+        }
+
+        // Unauthorized HTTP exception
+        if ($rand == 4) {
+            throw new UnauthorizedHttpException("Bearer", "Unauthorized");
+        }
+
+        // Bad request HTTP exception
+        if ($rand == 5) {
+            throw new BadRequestHttpException("Bad Request");
+        }
+
+        // Unsupported Media exception
+        if ($rand == 6) {
+            throw new UnsupportedMediaTypeHttpException("Unsupported Media type");
+        }
+
+        // Invalid Metadata exception
+        if ($rand == 7) {
+            throw new InvalidMetadataException("Invalid Metadata");
+        }
+
+        // Method not allowed HTTP exception
+        if ($rand == 8) {
+            throw new MethodNotAllowedHttpException([], "Method Not Allowed");
+        }
+
+        // Service unavailable HTTP exception
+        if ($rand == 9) {
+            throw new ServiceUnavailableHttpException(null, "Service Unavailable");
+        }
+
+        // Conflict HTTP exception
+        if ($rand == 10) {
+            throw new ConflictHttpException("Conflict");
+        }
+
+        throw new Exception("This is a test to generate exceptions");
+    }
     public function generateExcel(Request $request): JsonResponse
     {
         $users = User::all();
@@ -103,7 +189,7 @@ class ProductController extends Controller
                         'restartPolicy' => 'Never'
                     ]
                 ],
-                'backoffLimit' => 4
+                'backoffLimit' => 1
             ]
         ];
 
