@@ -1,12 +1,14 @@
 deploymentMode: SimpleScalable
 loki:
+  auth_enabled: false
   storage:
     bucketNames:
-      chunks: ${GRAFANA_LOKI_BUCKET_NAME}
-      ruler: ${GRAFANA_LOKI_BUCKET_NAME}
+      chunks: chunk
+      ruler: ruler
     type: s3
     s3:
       region: us-east-1
+      s3ForcePathStyle: true
       endpoint: ${GRAFANA_LOKI_S3_ENDPOINT}
       accessKeyId: ${GRAFANA_LOKI_S3_ACCESS_KEY_ID}
       secretAccessKey: ${GRAFANA_LOKI_S3_SECRET_ACCESS_KEY}
@@ -34,7 +36,7 @@ test:
 
 
 write:
-  replicas: 1
+  replicas: 2
   resources:
     requests:
       cpu: "100m"
@@ -44,7 +46,7 @@ write:
       memory: "300Mi"
   autoscaling:
     enabled: false
-    minReplicas: 1
+    minReplicas: 2
     maxReplicas: 3
     targetCPUUtilizationPercentage: 80
     targetMemoryUtilizationPercentage: 85
@@ -63,7 +65,7 @@ write:
 
 
 read:
-  replicas: 1
+  replicas: 2
   resources:
     requests:
       cpu: "100m"
@@ -73,7 +75,7 @@ read:
       memory: "300Mi"
   autoscaling:
     enabled: true
-    minReplicas: 1
+    minReplicas: 2
     maxReplicas: 3
     targetCPUUtilizationPercentage: 60
     targetMemoryUtilizationPercentage: 85
@@ -92,7 +94,7 @@ read:
 
 
 backend:
-  replicas: 1
+  replicas: 2
   resources:
     requests:
       cpu: "100m"
@@ -102,7 +104,7 @@ backend:
       memory: "300Mi"
   autoscaling:
     enabled: true
-    minReplicas: 1
+    minReplicas: 2
     maxReplicas: 3
     targetCPUUtilizationPercentage: 60
     targetMemoryUtilizationPercentage: 85

@@ -6,5 +6,7 @@ datasources:
     datasources:
       - name: Loki
         type: loki
+        uid: loki
         access: proxy
-        url: http://loki.loki:3100
+        url: http://loki-read.loki:3100
+        timeout: 60s
